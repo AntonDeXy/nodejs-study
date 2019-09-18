@@ -2,87 +2,32 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const MongoClient = require('mongodb').MongoClient
 var ObjectID = require('mongodb').ObjectId
-
+var db = require('./db')
+var artistsController = require('./controllesrs/artists')
 const app = express()
-var db;
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true }))
-
-var artists = [
-  {
-    id: 1,
-    name: 'Metallica'
-  },
-  {
-    id: 2,
-    name: 'Iron Maiden'
-  },
-  {
-    id: 3,
-    name: 'Deep Purple'
-  }
-];
 
 app.get('/', function (req, res) {
   res.send('Hello API')
 })
 
-app.get('/artists', function (req, res) {
-  db.collection('artists').find().toArray(function (err, docs){
-    if (err) {
-      console.log(err);
-      return res.sendStatus(500)
-    } 
-    res.send(docs)
-  })
-})
+app.get('/artists', artistsController.all)
 
-app.get('/artists/:id', function (req, res) {
-  db.collection('artists').findOne({_id: ObjectID(req.params.id)}, function(err, doc){
-    if (err) {
-      console.log(err);
-      return res.sendStatus(500)
-    } 
-    res.send(doc)
-  })
-})
+app.get('/artists/:id', artistsController.findById)
 
-app.post('/artists', function (req, res) {
-  var artist = {
-    name: req.body.name
-  }
-  db.collection('artists').insert(artist, function(err, result){
-    if (err) {
-      console.log(err);
-      return res.sendStatus(500)
-    }
-    res.send(artist)
-  })
-  // res.send(artist)
-})
+app.post('/artists', artistsController.create)
 
-app.put('/artists/:id', function(req, res) {
-  var artist = artists.find(function (artist) {
-    return artist.id === Number(req.params.id)
-  })
-  artist.name = req.body.name
-  res.sendStatus(200)
-})
+app.put('/artists/:id', artistsController.update)
 
 
-app.delete('/artists/:id', function (req, res) {
-  artists = artists.filter(function (artist) {
-    return artist.id !== Number(req.params.id)
-  })
-  res.sendStatus(200)
-})
+app.delete('/artists/:id', artistsController.delete)
 
-MongoClient.connect('mongodb://localhost:27017/myapi',{ useUnifiedTopology:true, useNewUrlParser: true }, function(err, database){
+db.connect('mongodb://localhost:27017/myapi', function (err) {
   if (err) {
     return console.log(err)
   }
-  db = database.db('myapi')
 
   app.listen(3012, function () {
     console.log("API started")
